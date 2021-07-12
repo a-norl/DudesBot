@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace DudesBot
 {
     public class DudesDBContext : DbContext
     {
-        public DbSet<UserWarning> UserWarning {get; set;}
-        public DbSet<ReminderObject> ReminderObject {get;set;}
+        public DbSet<UserWarning> UserWarning { get; set; }
+        public DbSet<ReminderObject> ReminderObject { get; set; }
 
         public DudesDBContext(DbContextOptions options) : base(options)
         {

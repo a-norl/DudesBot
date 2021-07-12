@@ -1,22 +1,20 @@
 using System;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DSharpPlus.Entities;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DudesBot.Commands
 {
     public class MiscCommands : BaseCommandModule
     {
 
-        public Random GetRandom {private get; set;}
-        public IDbContextFactory<DudesDBContext> ContextFactory {private get; set;}
+        public Random GetRandom { private get; set; }
+        public IDbContextFactory<DudesDBContext> ContextFactory { private get; set; }
 
         private static readonly Dictionary<int, string> pollNumberDict = new Dictionary<int, string>{
             {1, ":one:"},
@@ -31,7 +29,7 @@ namespace DudesBot.Commands
             {10, ":keycap_ten:"},
         };
 
-        [Command("rw-coinflip")]
+        [Command("coinflip")]
         public async Task CoinFlip(CommandContext context)
         {
             int coinRand = GetRandom.Next(1, 202);
@@ -49,7 +47,7 @@ namespace DudesBot.Commands
             }
         }
 
-        [Command("rw-roll"), Description("Roll a dice")]
+        [Command("roll"), Description("Roll a dice")]
         public async Task DiceRoll(CommandContext context, [Description("Dice roll argument in 1d20 format")] String rollArg)
         {
             int diceAmount = 1;
@@ -131,23 +129,6 @@ namespace DudesBot.Commands
                 await msg.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, pollNumberDict[i]));
             }
 
-        }
-
-        [Command("dbdebug")]
-        public async Task DBTest(CommandContext context)
-        {
-            var dbcontext = ContextFactory.CreateDbContext();
-            var warn = dbcontext.UserWarning
-                .OrderBy(warn => warn.Id)
-                .Last();
-
-            await context.RespondAsync(warn.WarnReason);
-        }
-
-        [Command("cooldowntest"), Cooldown(1, 30, CooldownBucketType.User)]
-        public async Task cooldownTest(CommandContext context)
-        {
-            await context.RespondAsync("response");
         }
 
     }

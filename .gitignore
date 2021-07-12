@@ -456,3 +456,4 @@ $RECYCLE.BIN/
 # Others
 Resources/BotConfig.json
 Resources/BotDatabase.db
+Migrations/

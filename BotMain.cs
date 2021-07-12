@@ -1,17 +1,20 @@
-﻿using System;
+﻿#pragma warning disable CS1998
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PokeApiNet;
 
 namespace DudesBot
 {
@@ -19,7 +22,7 @@ namespace DudesBot
     {
         public static BotSettingsObject botSettings;
 
-        static void Main(string[] args)
+        static void Main()
         {
             Console.WriteLine("Program Started");
             MainAsync().GetAwaiter().GetResult();
@@ -39,6 +42,8 @@ namespace DudesBot
 
             ServiceProvider services = new ServiceCollection()
                 .AddSingleton<Random>()
+                .AddSingleton<HttpClient>()
+                .AddSingleton<PokeApiClient>()
                 .AddDbContextFactory<DudesDBContext>(options => options.UseSqlite($"Filename={botSettings.DBPath}"))
                 .BuildServiceProvider();
 
@@ -49,37 +54,54 @@ namespace DudesBot
                 EnableMentionPrefix = true,
                 Services = services
             });
+            commands.RegisterCommands<Commands.DebugCommands>(); //Turn off when in actual use
 
             commands.RegisterCommands<Commands.MiscCommands>();
-            commands.CommandErrored += CommandError;
+            commands.RegisterCommands<Commands.PokemonCommands>();
+            commands.RegisterCommands<Commands.WarnCommands>();
+            commands.CommandErrored += CommandErrorHandler;
+            commands.CommandExecuted += CommandExecutedHandler;
+
+            discordClient.MessageUpdated += PinnedMessageHandler;
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
             await Task.Delay(-1);
         }
 
-        static async Task CommandError(CommandsNextExtension extension, CommandErrorEventArgs eventArgs)
+        static async Task CommandErrorHandler(CommandsNextExtension extension, CommandErrorEventArgs eventArgs)
         {
-            try
+            try //See if command errors due to a cooldown
             {
-                ChecksFailedException checksFailedException = (ChecksFailedException) eventArgs.Exception;
+                ChecksFailedException checksFailedException = (ChecksFailedException)eventArgs.Exception;
                 IReadOnlyList<CheckBaseAttribute> failedcheckList = checksFailedException.FailedChecks;
                 IEnumerable<CheckBaseAttribute> cooldownCheckList = failedcheckList
                     .Where(check => check.ToString().Contains("CooldownAttribute"));
-                foreach(CheckBaseAttribute check in cooldownCheckList)
+                foreach (CheckBaseAttribute check in cooldownCheckList)
                 {
                     await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
                 }
-                
             }
-            catch
+            catch (InvalidCastException) //For every other type of exception
             {
-                string exception = eventArgs.Exception.GetBaseException().ToString();
-                Console.WriteLine(exception.ToString());
-                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription(exception));
+                string exceptionString = eventArgs.Exception.GetBaseException().ToString();
+                Console.WriteLine(exceptionString.ToString());
+                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription(exceptionString));
             }
+        }
 
+        static async Task CommandExecutedHandler(CommandsNextExtension extension, CommandExecutionEventArgs eventArgs)
+        {
+            DiscordMember commandUser = eventArgs.Context.Member;
+            Console.WriteLine($"Received {eventArgs.Command} from {commandUser.Username}:{commandUser.Discriminator}");
+        }
 
+        static async Task PinnedMessageHandler(DiscordClient client, MessageUpdateEventArgs eventArgs)
+        {
+            if (eventArgs.MessageBefore.Pinned == false && eventArgs.Message.Pinned == true)
+            {
+                await Services.PinArchiveService.Archiver(eventArgs, botSettings.PinChannel);
+            }
         }
     }
 }

@@ -7,6 +7,6 @@ namespace DudesBot
         public ulong[] PinWatchedList { get; init; }
         public bool BotWatch { get; init; }
         public string[] CommandPrefix { get; init; }
-        public string DBPath {get;init;}
+        public string DBPath { get; init; }
     }
 }
