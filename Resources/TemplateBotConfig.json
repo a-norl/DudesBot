@@ -1,0 +1,8 @@
+{
+    "Token" : "bot token",
+    "PinChannel" : 0,
+    "PinWatchedList" : [],
+    "BotWatch" : false,
+    "CommandPrefix" : ["r!"],
+    "DBPath" : "path to sqlite database"
+}
