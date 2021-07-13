@@ -1,5 +1,14 @@
 {
     "cSpell.words": [
-        "Errored"
+        "Errored",
+        "Wojak"
+    ],
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:DudesBot}/BotDatabase.db",
+            "name": "BotDatabase"
+        }
     ]
 }

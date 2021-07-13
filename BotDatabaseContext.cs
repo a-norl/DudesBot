@@ -32,19 +32,19 @@ namespace DudesBot
         {
             modelBuilder.Entity<ReminderObject>(entity =>
             {
-                entity.HasKey(e => e.ReminderId);
+                entity.HasKey(e => e.Reminder_ID);
 
                 entity.ToTable("ReminderObject");
 
-                entity.Property(e => e.ReminderId)
+                entity.Property(e => e.Reminder_ID)
                     .HasColumnType("integer")
                     .HasColumnName("Reminder_ID");
 
-                entity.Property(e => e.ChannelId)
+                entity.Property(e => e.Channel_ID)
                     .HasColumnType("varchar")
                     .HasColumnName("Channel_ID");
 
-                entity.Property(e => e.GuildId)
+                entity.Property(e => e.Guild_ID)
                     .HasColumnType("varchar")
                     .HasColumnName("Guild_ID");
 
@@ -52,7 +52,7 @@ namespace DudesBot
 
                 entity.Property(e => e.Time).HasColumnType("bigint");
 
-                entity.Property(e => e.UserId)
+                entity.Property(e => e.User_ID)
                     .HasColumnType("varchar")
                     .HasColumnName("User_ID");
             });

@@ -52,10 +52,10 @@ namespace DudesBot.Commands
         {
             int diceAmount = 1;
             int diceSides = 20;
-            Regex diceFormat = new Regex(@"[0-9]+d[0-9]+", RegexOptions.IgnoreCase);
-            Regex halfDiceFormat = new Regex(@"d[0-9]+", RegexOptions.IgnoreCase);
+            Regex diceFormat = new(@"[0-9]+d[0-9]+", RegexOptions.IgnoreCase);
+            Regex halfDiceFormat = new(@"d[0-9]+", RegexOptions.IgnoreCase);
             int rollTotal = 0;
-            List<int> rollHist = new List<int>();
+            List<int> rollHist = new();
             string formattedRollList;
 
             if (diceFormat.IsMatch(rollArg))

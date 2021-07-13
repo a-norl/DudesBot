@@ -15,11 +15,11 @@ namespace DudesBot.Services
         [Command("embed"), RequireOwner, Hidden]
         public async Task EmbedDebug(CommandContext ctx, DiscordMessage toEmbed)
         {
-            DiscordMessageBuilder messageEmbed = await PinnedMessageEmbeder(toEmbed);
+            DiscordMessageBuilder messageEmbed = await PinnedMessageEmbedder(toEmbed);
             await ctx.Channel.SendMessageAsync(messageEmbed);
         }
 
-        public static async Task<DiscordMessageBuilder> PinnedMessageEmbeder(DiscordMessage message)
+        public static async Task<DiscordMessageBuilder> PinnedMessageEmbedder(DiscordMessage message)
         {
             Task<DiscordMember> getMemberTask = message.Channel.Guild.GetMemberAsync(message.Author.Id);
             DiscordEmbedBuilder embedBuilder = new();
@@ -70,7 +70,7 @@ namespace DudesBot.Services
         {
             DiscordChannel PinChannel = eventArgs.Guild.GetChannel(pinChannelId);
             if (PinChannel is null) { return; }
-            DiscordMessageBuilder archivedMessage = await PinnedMessageEmbeder(eventArgs.Message);
+            DiscordMessageBuilder archivedMessage = await PinnedMessageEmbedder(eventArgs.Message);
 
             var archiveTask = PinChannel.SendMessageAsync(archivedMessage);
             var pinList = await eventArgs.Message.Channel.GetPinnedMessagesAsync();
@@ -78,7 +78,7 @@ namespace DudesBot.Services
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    await pinList[(pinList.Count - 1) - i].UnpinAsync();
+                    await pinList[pinList.Count - 1 - i].UnpinAsync();
                 }
 
             }

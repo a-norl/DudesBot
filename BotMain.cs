@@ -12,6 +12,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PokeApiNet;
@@ -33,7 +34,7 @@ namespace DudesBot
             string jsonString = await File.ReadAllTextAsync($"Resources{Path.DirectorySeparatorChar}BotConfig.json");
             botSettings = JsonSerializer.Deserialize<BotSettingsObject>(jsonString);
 
-            DiscordClient discordClient = new DiscordClient(new DiscordConfiguration()
+            DiscordClient discordClient = new(new DiscordConfiguration()
             {
                 Token = botSettings.Token,
                 TokenType = TokenType.Bot,
@@ -44,6 +45,7 @@ namespace DudesBot
                 .AddSingleton<Random>()
                 .AddSingleton<HttpClient>()
                 .AddSingleton<PokeApiClient>()
+                .AddSingleton<ReminderBackgroundService>()
                 .AddDbContextFactory<DudesDBContext>(options => options.UseSqlite($"Filename={botSettings.DBPath}"))
                 .BuildServiceProvider();
 
@@ -59,6 +61,8 @@ namespace DudesBot
             commands.RegisterCommands<Commands.MiscCommands>();
             commands.RegisterCommands<Commands.PokemonCommands>();
             commands.RegisterCommands<Commands.WarnCommands>();
+            commands.RegisterCommands<Commands.ImageCommands>();
+            commands.RegisterCommands<Commands.ReminderCommands>();
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
@@ -66,6 +70,16 @@ namespace DudesBot
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
+            try
+            {
+                services.GetService<ReminderBackgroundService>().AttachClient(discordClient);
+                await services.GetService<ReminderBackgroundService>().Start();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             await Task.Delay(-1);
         }
 
@@ -98,6 +112,7 @@ namespace DudesBot
 
         static async Task PinnedMessageHandler(DiscordClient client, MessageUpdateEventArgs eventArgs)
         {
+            if (eventArgs.MessageBefore is null || eventArgs.Message is null) { return; }
             if (eventArgs.MessageBefore.Pinned == false && eventArgs.Message.Pinned == true)
             {
                 await Services.PinArchiveService.Archiver(eventArgs, botSettings.PinChannel);

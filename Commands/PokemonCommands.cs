@@ -33,12 +33,12 @@ namespace DudesBot.Commands
             { "steel", "B7B7CE" },
             { "fairy", "D685AD" },
         };
-        public PokeApiClient pokeApiClient { private get; set; }
+        public PokeApiClient PokeAPI { private get; set; }
 
         [Command("pokemon"), Priority(1)]
         public async Task PokemonByName(CommandContext context, string pokemonName)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(pokemonName);
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(pokemonName);
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, false);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
@@ -46,7 +46,7 @@ namespace DudesBot.Commands
         [Command("pokemon"), Priority(2)]
         public async Task PokemonByDex(CommandContext context, int dexNum)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(dexNum);
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(dexNum);
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, false);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
@@ -54,7 +54,7 @@ namespace DudesBot.Commands
         [Command("pokemon"), Priority(0)]
         public async Task PokemonRandom(CommandContext context)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(new Random().Next(932));
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(new Random().Next(932));
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, false);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
@@ -62,7 +62,7 @@ namespace DudesBot.Commands
         [Command("shinypokemon"), Priority(1)]
         public async Task ShinyPokemonByName(CommandContext context, string pokemonName)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(pokemonName);
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(pokemonName);
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, true);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
@@ -70,7 +70,7 @@ namespace DudesBot.Commands
         [Command("shinypokemon"), Priority(2)]
         public async Task ShinyPokemonByDex(CommandContext context, int dexNum)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(dexNum);
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(dexNum);
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, true);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
@@ -78,12 +78,12 @@ namespace DudesBot.Commands
         [Command("shinypokemon"), Priority(0)]
         public async Task ShinyPokemonRandom(CommandContext context)
         {
-            Pokemon requestedPokemon = await pokeApiClient.GetResourceAsync<Pokemon>(new Random().Next(932));
+            Pokemon requestedPokemon = await PokeAPI.GetResourceAsync<Pokemon>(new Random().Next(932));
             DiscordEmbedBuilder pokemonEmbed = BuildPokemonEmbed(requestedPokemon, true);
             await context.Channel.SendMessageAsync(pokemonEmbed.Build());
         }
 
-        private DiscordEmbedBuilder BuildPokemonEmbed(Pokemon inputPokemon, bool shiny)
+        private static DiscordEmbedBuilder BuildPokemonEmbed(Pokemon inputPokemon, bool shiny)
         {
             DiscordEmbedBuilder embedBuilder = new();
 

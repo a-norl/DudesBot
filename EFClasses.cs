@@ -27,10 +27,10 @@ namespace DudesBot
     public class ReminderObject
     {
         [Key]
-        public int ReminderId { get; init; }
-        public string UserId { get; init; }
-        public string GuildId { get; init; }
-        public string ChannelId { get; init; }
+        public int Reminder_ID { get; init; }
+        public string User_ID { get; init; }
+        public string Guild_ID { get; init; }
+        public string Channel_ID { get; init; }
         public DateTime Time { get; init; }
         public string Message { get; init; }
     }
