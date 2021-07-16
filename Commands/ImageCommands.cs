@@ -176,22 +176,40 @@ namespace DudesBot.Commands
             await SendImage(BigAndRoundGif, context.Message, $" ");
         }
 
-        [Command("deflate"), Cooldown(1, 10, CooldownBucketType.User)]
+        [Command("deflate"), Cooldown(1, 10, CooldownBucketType.User), Priority(1)]
         public async Task DeflateSmallAndRound(CommandContext context, DiscordMember victimMember)
         {
             await context.TriggerTypingAsync();
             MagickImage victimAvatar = await DownloadAvatar(victimMember);
             MagickImageCollection BigAndRoundGif = new();
             victimAvatar.Resize(250, 250);
-            for (float i = 0; i >= -0.8; i -= 0.05f)
+            for (float i = 0; i <= 0.8; i += 0.05f)
             {
                 IMagickImage<byte> tempImage = victimAvatar.Clone();
-                tempImage.Distort(DistortMethod.Barrel, i, 0.0, 0.0);
+                tempImage.Distort(DistortMethod.BarrelInverse, i, 0.0, 0.0);
                 tempImage.AnimationDelay = 10;
                 BigAndRoundGif.Add(tempImage);
             }
             BigAndRoundGif.Last().AnimationDelay = 100;
             await SendImage(BigAndRoundGif, context.Message, $"{UtilityMethods.GetName(victimMember)} has been deflated small and (not?) round");
+        }
+
+        [Command("deflate"), Cooldown(1, 10, CooldownBucketType.User), Priority(0)]
+        public async Task DeflateAttachmentSmallAndRound(CommandContext context)
+        {
+            await context.TriggerTypingAsync();
+            MagickImage victimAttachment = await DownloadAttachment(context.Message);
+            MagickImageCollection BigAndRoundGif = new();
+            victimAttachment.Resize(250, 250);
+            for (float i = 0; i <= 0.8; i += 0.05f)
+            {
+                IMagickImage<byte> tempImage = victimAttachment.Clone();
+                tempImage.Distort(DistortMethod.BarrelInverse, i, 0.0, 0.0);
+                tempImage.AnimationDelay = 10;
+                BigAndRoundGif.Add(tempImage);
+            }
+            BigAndRoundGif.Last().AnimationDelay = 100;
+            await SendImage(BigAndRoundGif, context.Message, $"");
         }
 
         [Command("squish"), Cooldown(1, 10, CooldownBucketType.User), Priority(1)]
