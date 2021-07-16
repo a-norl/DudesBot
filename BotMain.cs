@@ -83,24 +83,24 @@ namespace DudesBot
             await Task.Delay(-1);
         }
 
-        static async Task CommandErrorHandler(CommandsNextExtension extension, CommandErrorEventArgs eventArgs)
+        static async Task CommandErrorHandler(CommandsNextExtension _, CommandErrorEventArgs eventArgs)
         {
             try //See if command errors due to a cooldown
             {
-                ChecksFailedException checksFailedException = (ChecksFailedException)eventArgs.Exception;
+                ChecksFailedException checksFailedException = eventArgs.Exception as ChecksFailedException;
                 IReadOnlyList<CheckBaseAttribute> failedcheckList = checksFailedException.FailedChecks;
-                IEnumerable<CheckBaseAttribute> cooldownCheckList = failedcheckList
-                    .Where(check => check.ToString().Contains("CooldownAttribute"));
-                foreach (CheckBaseAttribute check in cooldownCheckList)
+                foreach (var check in failedcheckList)
                 {
-                    await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
+                    if(check is CooldownAttribute)
+                    {
+                        await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
+                    }
                 }
             }
             catch (InvalidCastException) //For every other type of exception
             {
-                string exceptionString = eventArgs.Exception.GetBaseException().ToString();
-                Console.WriteLine(exceptionString.ToString());
-                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription(exceptionString));
+                Console.WriteLine(eventArgs.Exception);
+                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription($"The command threw an exception with the message `{eventArgs.Exception.Message}`"));
             }
         }
 
