@@ -10,6 +10,7 @@ namespace DudesBot
     {
         public DbSet<UserWarning> UserWarning { get; set; }
         public DbSet<ReminderObject> ReminderObject { get; set; }
+        public DbSet<CustomCommandObject> CustomCommands { get; set; }
 
         public DudesDBContext(DbContextOptions options) : base(options)
         {
@@ -33,5 +34,14 @@ namespace DudesBot
         public string Channel_ID { get; init; }
         public DateTime Time { get; init; }
         public string Message { get; init; }
+    }
+
+    public class CustomCommandObject
+    {
+        [Key]
+        public int CommandId { get; init; }
+        public string CommandPhrase { get; init; }
+        public string Response { get; init; }
+        public ulong authorId { get; init; }
     }
 }

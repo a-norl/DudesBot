@@ -19,6 +19,7 @@ namespace DudesBot
 
         public virtual DbSet<ReminderObject> ReminderObjects { get; set; }
         public virtual DbSet<UserWarning> UserWarnings { get; set; }
+        public virtual DbSet<CustomCommandObject> CustomCommandObjects { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
