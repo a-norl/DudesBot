@@ -97,7 +97,7 @@ namespace DudesBot
                     }
                 }
             }
-            catch (InvalidCastException) //For every other type of exception
+            catch (NullReferenceException) //For every other type of exception
             {
                 Console.WriteLine(eventArgs.Exception);
                 await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription($"The command threw an exception with the message `{eventArgs.Exception.Message}`"));
