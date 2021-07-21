@@ -10,7 +10,7 @@ namespace DudesBot
     {
         public DbSet<UserWarning> UserWarning { get; set; }
         public DbSet<ReminderObject> ReminderObject { get; set; }
-        public DbSet<CustomCommandObject> CustomCommands { get; set; }
+        public DbSet<CustomCommandObject> CustomCommandObjects { get; set; }
 
         public DudesDBContext(DbContextOptions options) : base(options)
         {

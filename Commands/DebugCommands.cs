@@ -47,5 +47,12 @@ namespace DudesBot.Commands
         {
             await context.RespondAsync(UtilityMethods.GetName(queriedUser));
         }
+
+        [Command("embed"), Hidden]
+        public async Task EmbedCommand(CommandContext context, DiscordMessage message)
+        {
+            await context.Channel.SendMessageAsync(await Services.PinArchiveService.PinnedMessageEmbedder(message));
+        }
+
     }
 }

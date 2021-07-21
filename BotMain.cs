@@ -12,6 +12,11 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.EventHandling;
+using DSharpPlus.Interactivity.Extensions;
+using DudesBot.Commands;
 using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,17 +61,36 @@ namespace DudesBot
                 EnableMentionPrefix = true,
                 Services = services
             });
-            commands.RegisterCommands<Commands.DebugCommands>(); //Turn off when in actual use
 
-            commands.RegisterCommands<Commands.MiscCommands>();
-            commands.RegisterCommands<Commands.PokemonCommands>();
-            commands.RegisterCommands<Commands.WarnCommands>();
-            commands.RegisterCommands<Commands.ImageCommands>();
-            commands.RegisterCommands<Commands.ReminderCommands>();
+            InteractivityExtension interactivity = discordClient.UseInteractivity(new InteractivityConfiguration()
+            {
+                PaginationButtons = new PaginationButtons()
+                {
+                    Left = new DiscordButtonComponent(ButtonStyle.Primary, "left", null, false, new DiscordComponentEmoji(DiscordEmoji.FromUnicode("⬅️"))),
+                    Right = new DiscordButtonComponent(ButtonStyle.Primary, "right", null, false, new DiscordComponentEmoji(DiscordEmoji.FromUnicode("➡️"))),
+                    SkipLeft = new DiscordButtonComponent(ButtonStyle.Primary, "skipleft", null, false, new DiscordComponentEmoji(DiscordEmoji.FromUnicode("⏪"))),
+                    SkipRight = new DiscordButtonComponent(ButtonStyle.Primary, "skipright", null, false, new DiscordComponentEmoji(DiscordEmoji.FromUnicode("⏭️"))),
+                    Stop = new DiscordButtonComponent(ButtonStyle.Primary, "stop", null, false, new DiscordComponentEmoji(DiscordEmoji.FromUnicode("⏹️"))),
+                },
+                ButtonBehavior = ButtonPaginationBehavior.Disable,
+                Timeout = TimeSpan.FromSeconds(120),
+            });
+
+            commands.RegisterCommands<DebugCommands>(); //Turn off when in actual use
+
+            commands.RegisterCommands<MiscCommands>();
+            commands.RegisterCommands<PokemonCommands>();
+            commands.RegisterCommands<WarnCommands>();
+            commands.RegisterCommands<ImageCommands>();
+            commands.RegisterCommands<ReminderCommands>();
+            commands.RegisterCommands<CustomCommands>();
+            commands.RegisterCommands<UndeleteCommand>();
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
             discordClient.MessageUpdated += PinnedMessageHandler;
+            discordClient.MessageCreated += MessageCreatedHandler;
+            discordClient.MessageDeleted += MessageDeleteHandler;
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
@@ -75,12 +99,23 @@ namespace DudesBot
                 services.GetService<ReminderBackgroundService>().AttachClient(discordClient);
                 await services.GetService<ReminderBackgroundService>().Start();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e);
             }
 
             await Task.Delay(-1);
+        }
+
+        static async Task MessageCreatedHandler(DiscordClient client, MessageCreateEventArgs eventArgs)
+        {
+            //Put custom command handler here
+        }
+
+        static async Task MessageDeleteHandler(DiscordClient client, MessageDeleteEventArgs eventArgs)
+        {
+            if (eventArgs.Message.Author.IsBot) { return; }
+            UndeleteCommand.LatestDelete = eventArgs.Message;
         }
 
         static async Task CommandErrorHandler(CommandsNextExtension _, CommandErrorEventArgs eventArgs)
@@ -91,23 +126,32 @@ namespace DudesBot
                 IReadOnlyList<CheckBaseAttribute> failedcheckList = checksFailedException.FailedChecks;
                 foreach (var check in failedcheckList)
                 {
-                    if(check is CooldownAttribute)
+                    switch (check)
                     {
-                        await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
+                        case CooldownAttribute:
+                            await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
+                            break;
+                        case RequireAttachmentAttribute:
+                            await eventArgs.Context.Message.RespondAsync("Command requires an attachment");
+                            break;
+                        case DisallowUserAttribute:
+                            await eventArgs.Context.Message.RespondAsync("you specifically cannot use this command.");
+                            break;
                     }
                 }
             }
             catch (NullReferenceException) //For every other type of exception
             {
                 Console.WriteLine(eventArgs.Exception);
-                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription($"The command threw an exception with the message `{eventArgs.Exception.Message}`"));
+                if (eventArgs.Exception is CommandNotFoundException) { return; }
+                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription($"The command threw an exception with the message\n```{eventArgs.Exception.Message}\n```"));
             }
         }
 
         static async Task CommandExecutedHandler(CommandsNextExtension extension, CommandExecutionEventArgs eventArgs)
         {
             DiscordMember commandUser = eventArgs.Context.Member;
-            Console.WriteLine($"Received {eventArgs.Command} from {commandUser.Username}:{commandUser.Discriminator}");
+            Console.WriteLine($"[{DateTime.Now}] Executed {eventArgs.Command} from {commandUser.Username}:{commandUser.Discriminator} in {eventArgs.Context.Channel.Name}:{eventArgs.Context.Guild.Name}");
         }
 
         static async Task PinnedMessageHandler(DiscordClient client, MessageUpdateEventArgs eventArgs)
@@ -115,7 +159,7 @@ namespace DudesBot
             if (eventArgs.MessageBefore is null || eventArgs.Message is null) { return; }
             if (eventArgs.MessageBefore.Pinned == false && eventArgs.Message.Pinned == true)
             {
-                await Services.PinArchiveService.Archiver(eventArgs, botSettings.PinChannel);
+                await PinArchiveService.Archiver(eventArgs, botSettings.PinChannel);
             }
         }
     }

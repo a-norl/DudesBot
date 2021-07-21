@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +49,23 @@ namespace DudesBot.Commands
                     reminderListString += $"<#{reminder.Channel_ID}> at {reminder.Time.ToLongTimeString()} on {reminder.Time.ToLongDateString()} UTC: {reminder.Message}\n";
                 }
             }
-            await context.RespondAsync(reminderListString);
+            var interactivity = context.Client.GetInteractivity();
+            var pages = interactivity.GeneratePagesInEmbed(reminderListString, DSharpPlus.Interactivity.Enums.SplitType.Line);
+            await context.Channel.SendPaginatedMessageAsync(context.Member, pages);
+        }
+
+        [Command("remindersall"), Hidden, RequireOwner]
+        public async Task ListAllReminders(CommandContext context)
+        {
+            var dbContext  = ContextFactory.CreateDbContext();
+            string reminderListString = "Your Reminders:\n";
+            foreach(ReminderObject reminder in dbContext.ReminderObject)
+            {
+                reminderListString += $"<#{reminder.Channel_ID}> at {reminder.Time.ToLongTimeString()} on {reminder.Time.ToLongDateString()} UTC: {reminder.Message}\n";
+            }
+            var interactivity = context.Client.GetInteractivity();
+            var pages = interactivity.GeneratePagesInEmbed(reminderListString, DSharpPlus.Interactivity.Enums.SplitType.Line);
+            await context.Channel.SendPaginatedMessageAsync(context.Member, pages);
         }
 
     }
