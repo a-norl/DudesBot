@@ -5,10 +5,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using ImageMagick;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DudesBot.Commands
 {
@@ -29,6 +32,7 @@ namespace DudesBot.Commands
         private static readonly MagickImage LayerHandRight;
         private static readonly MagickImage LayerFingeeLeft;
         private static readonly MagickImage LayerFingeeRight;
+        private static readonly MagickImage JarImage;
         private static readonly string ThisFilm = "This Image is Dedicated to the Brave Mujahideen Fighters of Afghanistan";
 
         static ImageCommands()
@@ -47,6 +51,7 @@ namespace DudesBot.Commands
             LayerFingeeRight = new($"Resources{Path.DirectorySeparatorChar}fingees_right_layer.png");
             LayerHandLeft = new($"Resources{Path.DirectorySeparatorChar}hand_left_layer.png");
             LayerHandRight = new($"Resources{Path.DirectorySeparatorChar}hand_right_layer.png");
+            JarImage = new($"Resources{Path.DirectorySeparatorChar}jar.png");
         }
 
         [Command("imagetestmagick"), Description("a test command, don't expect much from this")]
@@ -84,14 +89,14 @@ namespace DudesBot.Commands
             await SendImage(inputImage, context.Message, "ouput");
         }
 
-        [Command("impact"), Cooldown(1, CooldownTime, CooldownBucketType.User), RequireAttachment, Description("Adds impact text to the top and bottom of the image")]
+        [Command("impact"), Cooldown(1, CooldownTime, CooldownBucketType.User), Description("Adds impact text to the top and bottom of the image")]
         public async Task ImpactCommand(CommandContext context, [Description("The top text of the image")] string topText, [Description("The bottom text of the image")] string bottomText)
         {
             await context.TriggerTypingAsync();
             MagickImage inputImage = await DownloadAttachment(context.Message);
             MagickReadSettings textSettings = new()
             {
-                Font = "Impact",
+                Font = $"Resources{Path.DirectorySeparatorChar}impact.ttf",
                 TextGravity = Gravity.Center,
                 BackgroundColor = MagickColors.Transparent,
                 Height = inputImage.Height / 5,
@@ -260,7 +265,7 @@ namespace DudesBot.Commands
             return killGIF;
         }
 
-        [Command("cowboy"), Cooldown(1, CooldownTime, CooldownBucketType.User), Hidden]
+        [Command("cowboy"), Cooldown(1, CooldownTime, CooldownBucketType.User)]
         public async Task EmojiCowboy(CommandContext context, DiscordEmoji inputEmoji)
         {
             await context.TriggerTypingAsync();
@@ -286,7 +291,7 @@ namespace DudesBot.Commands
             await SendImage(imageCanvas, context.Message, $"{UtilityMethods.GetName(victimMember)} has been drawn as a crying wojak, they have lost the argument");
         }
 
-        [Command("jpeg"), Aliases("jpg"), Cooldown(1, CooldownTime, CooldownBucketType.User), RequireAttachment]
+        [Command("jpeg"), Aliases("jpg"), Cooldown(1, CooldownTime, CooldownBucketType.User)]
         public async Task JpegCommand(CommandContext context, int compressionLevel = 10)
         {
             await context.TriggerTypingAsync();
@@ -300,15 +305,9 @@ namespace DudesBot.Commands
         }
 
         [Command("quote"), Priority(1)]
-        public async Task QuoteCommand(CommandContext context, DiscordMember quotedMember, [RemainingText] params string[] quoteRaw)
+        public async Task QuoteCommand(CommandContext context, DiscordMember quotedMember, [RemainingText] string quote)
         {
             await context.TriggerTypingAsync();
-
-            string quote = "";
-            foreach (var word in quoteRaw)
-            {
-                quote += $"{word} ";
-            }
 
             MagickImage quoteImage = await QuoteGenerator(quotedMember, quote);
 
@@ -318,10 +317,17 @@ namespace DudesBot.Commands
         [Command("quote"), Priority(2)]
         public async Task QuoteMessageCommand(CommandContext context, DiscordMessage inputMessage)
         {
-            await context.TriggerTypingAsync();
+            // await context.TriggerTypingAsync();
 
             var quotedMember = await context.Guild.GetMemberAsync(inputMessage.Author.Id);
-            MagickImage quoteImage = await QuoteGenerator(quotedMember, inputMessage.Content);
+            Task<MagickImage> quoteImageTask = QuoteGenerator(quotedMember, inputMessage.Content);
+            MagickImage quoteImage;
+            do
+            {
+                await context.TriggerTypingAsync();
+            }
+            while (!quoteImageTask.IsCompleted);
+            quoteImage = await quoteImageTask;
 
             await SendImage(quoteImage, context.Message, " ");
         }
@@ -390,7 +396,28 @@ namespace DudesBot.Commands
             return imageCanvas;
         }
 
-        [Command("brave"), Cooldown(1, CooldownTime, CooldownBucketType.User), RequireAttachment]
+        [Command("text"), Hidden]
+        public async Task TextTestCommand(CommandContext context, [RemainingText] string input)
+        {
+            await context.TriggerTypingAsync();
+            var imageCanvas = new MagickImage(MagickColors.Black, 500,500);
+
+            MagickReadSettings quoteTextSettings = new()
+            {
+                Font = $"Garamond",
+                TextGravity = Gravity.Center,
+                BackgroundColor = MagickColors.Transparent,
+                // Height = 500,
+                // Width = 500,
+                FillColor = MagickColors.White,
+            };
+            MagickImage quoteDrawn = new($"pango:{input}", quoteTextSettings);
+            imageCanvas.Composite(quoteDrawn, 0, 0, CompositeOperator.Over);
+
+            await SendImage(imageCanvas, context.Message, "");
+        }
+
+        [Command("brave"), Cooldown(1, CooldownTime, CooldownBucketType.User)]
         public async Task BraveMujahideenFighters(CommandContext context)
         {
             await context.TriggerTypingAsync();
@@ -414,15 +441,88 @@ namespace DudesBot.Commands
             await SendImage(imageInput, context.Message, "");
         }
 
+        [Command("jar"), Cooldown(1, CooldownTime, CooldownBucketType.User), Priority(0)]
+        public async Task JarAttachment(CommandContext context)
+        {
+            await context.TriggerTypingAsync();
+            var inputImage = await DownloadAttachment(context.Message);
+            var outputImage = PutInJar(inputImage);
+            await SendImage(outputImage, context.Message, $"");
+        }
+
+        [Command("jar"), Cooldown(1, CooldownTime, CooldownBucketType.User), Priority(1), DisallowUser(281938559416664064)]
+        public async Task JarUser(CommandContext context, DiscordMember victimMember)
+        {
+            await context.TriggerTypingAsync();
+            var avatarImage = await DownloadAvatar(victimMember);
+            var outputImage = PutInJar(avatarImage);
+            await SendImage(outputImage, context.Message, $"{UtilityMethods.GetName(victimMember)} has been trapped in the jar");
+        }
+
+        private MagickImage PutInJar(MagickImage victimPhoto)
+        {
+            var imageCanvas = new MagickImage(MagickColors.Transparent, JarImage.Width, JarImage.Height);
+            victimPhoto.Resize(450, 450);
+            imageCanvas.Composite(victimPhoto, 100, 320, CompositeOperator.Over);
+            imageCanvas.Composite(JarImage, 0, 0, CompositeOperator.Over);
+
+            return imageCanvas;
+        }
+
+        [Command("mousetrap")]
+        public async Task MousetrapCommand(CommandContext context)
+        {
+            var mousetrapEmote = DiscordEmoji.FromName(context.Client, ":mouse_trap:");
+            var buttonMessage = new DiscordMessageBuilder()
+            {
+                Content = "press me :]"
+            };
+            buttonMessage.AddComponents(new DiscordButtonComponent(DSharpPlus.ButtonStyle.Danger, "mousetrap_button", null, false, new DiscordComponentEmoji(mousetrapEmote)));
+            var deleteTask = context.Message.DeleteAsync();
+            await context.Channel.SendMessageAsync(buttonMessage);
+            await deleteTask;
+        }
+
+        public static async Task MouseTrapImage(DiscordClient client, ComponentInteractionCreateEventArgs eventArgs, bool deleteOriginal = true)
+        {
+            var interaction = eventArgs.Interaction;
+            await interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+            if(deleteOriginal){await interaction.DeleteOriginalResponseAsync();}
+            await eventArgs.Channel.TriggerTypingAsync();
+
+            var httpClient = client.GetCommandsNext().Services.GetService<HttpClient>();
+            var victimMember = (DiscordMember)interaction.User;
+            MagickImage victimAvatar;
+
+            var getAvatarTask = httpClient.GetByteArrayAsync(victimMember.AvatarUrl);
+            var getGuildAvatarTask = httpClient.GetByteArrayAsync(victimMember.GuildAvatarUrl);
+            try
+            {
+                byte[] guildAvatarByteArray = await getGuildAvatarTask;
+                victimAvatar = new MagickImage(guildAvatarByteArray);
+            }
+            catch
+            {
+                byte[] avatarByteArray = await getAvatarTask;
+                victimAvatar = new MagickImage(avatarByteArray);
+            }
+            victimAvatar.Resize(190, 190);
+            var imageCanvas = new MagickImage(MagickColors.White, BoxImage.Width, BoxImage.Height);
+            imageCanvas.Composite(victimAvatar, 225, 260, CompositeOperator.Over);
+            imageCanvas.Composite(BoxImage, 0, 0, CompositeOperator.Over);
+
+            await SendImage(imageCanvas, eventArgs.Message, $"{UtilityMethods.GetName(victimMember)} has been trapped");
+        }
+
         private async Task<MagickImage> DownloadAttachment(DiscordMessage targetMessage)
         {
             IReadOnlyList<DiscordAttachment> attachmentList = targetMessage.Attachments;
             DiscordAttachment attachment;
             if (attachmentList.Count == 0)
             {
-                if(targetMessage.ReferencedMessage is not null)
+                if (targetMessage.ReferencedMessage is not null)
                 {
-                    if(targetMessage.ReferencedMessage.Attachments.Count != 0)
+                    if (targetMessage.ReferencedMessage.Attachments.Count != 0)
                     {
                         attachment = targetMessage.ReferencedMessage.Attachments[0];
                     }
@@ -430,7 +530,7 @@ namespace DudesBot.Commands
                     {
                         return null;
                     }
-                } 
+                }
                 else
                 {
                     return null;
@@ -494,7 +594,7 @@ namespace DudesBot.Commands
 
         }
 
-        private async Task SendImage(MagickImage attachment, DiscordMessage commandMessage, string message, bool jpeg = false)
+        private static async Task SendImage(MagickImage attachment, DiscordMessage commandMessage, string message, bool jpeg = false)
         {
             string filePath;
             if (jpeg)
@@ -521,7 +621,7 @@ namespace DudesBot.Commands
             File.Delete(filePath);
         }
 
-        private async Task SendImage(MagickImageCollection attachment, DiscordMessage commandMessage, string message) //Send gif
+        private static async Task SendImage(MagickImageCollection attachment, DiscordMessage commandMessage, string message) //Send gif
         {
             attachment[0].AnimationIterations = 0;
             string filePath = $"Output{Path.DirectorySeparatorChar}output_{DateTime.Now.ToFileTime()}.gif";

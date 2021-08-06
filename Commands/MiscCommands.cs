@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -129,6 +130,109 @@ namespace DudesBot.Commands
                 await msg.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, pollNumberDict[i]));
             }
 
+        }
+
+        [Command("recursion")]
+        public async Task RecursionDM(CommandContext context)
+        {
+            var DMChannel = await context.Member.CreateDmChannelAsync();
+            for (int i = 0; i < 20; i++)
+            {
+                await DMChannel.SendMessageAsync("recursion");
+                Thread.Sleep(i * 200);
+            }
+
+        }
+
+        [Command("uninstall")]
+        public async Task UninstallRat(CommandContext context, DiscordMember member)
+        {
+            var message = await context.RespondAsync($"uninstalling {UtilityMethods.GetName(member)}");
+            Thread.Sleep(1000);
+
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n▁▁▁▁▁▁▁▁▁▁▁▁▁ 0%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n█▁▁▁▁▁▁▁▁▁ 10%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n██▁▁▁▁▁▁▁▁ 20%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n███▁▁▁▁▁▁▁ 30%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n████▁▁▁▁▁▁ 40%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n██████▁▁▁▁▁▁ 50%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n██████▁▁▁▁ 60%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n███████▁▁▁ 70%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n████████▁▁ 80%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n█████████▁ 90%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"uninstalling {UtilityMethods.GetName(member)}\n██████████ 100%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"{UtilityMethods.GetName(member)} has been uninstalled");
+        }
+
+        [Command("install")]
+        public async Task installRat(CommandContext context, DiscordMember member)
+        {
+            var message = await context.RespondAsync($"installing {UtilityMethods.GetName(member)}");
+            Thread.Sleep(1000);
+
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n▁▁▁▁▁▁▁▁▁▁▁▁▁ 0%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n█▁▁▁▁▁▁▁▁▁ 10%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n██▁▁▁▁▁▁▁▁ 20%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n███▁▁▁▁▁▁▁ 30%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n████▁▁▁▁▁▁ 40%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n██████▁▁▁▁▁▁ 50%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n██████▁▁▁▁ 60%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n███████▁▁▁ 70%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n████████▁▁ 80%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n█████████▁ 90%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"installing {UtilityMethods.GetName(member)}\n██████████ 100%");
+            Thread.Sleep(500);
+            await message.ModifyAsync($"{UtilityMethods.GetName(member)} has been installed");
+        }
+
+        [Command("nickname"), RequireOwner, Hidden]
+        public async Task ChangeBotNickname(CommandContext context, string newName)
+        {
+            await context.Guild.CurrentMember.ModifyAsync(self=>
+            {
+                self.Nickname = newName;
+            });
+            await context.RespondAsync($"Nickname changed to {newName}");
+        }
+
+        [Command("leave"), RequireOwner, Hidden]
+        public async Task LeaveSearver(CommandContext context)
+        {
+            await context.Message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":wave:"));
+            await context.Guild.LeaveAsync();
+        }
+
+        [Command("select"), Hidden]
+        public async Task SelectMenuTest(CommandContext context, params string[] options)
+        {
+            var optionList = new  List<DiscordSelectComponentOption>();
+            foreach(var optionString in options)
+            {
+                optionList.Add(new DiscordSelectComponentOption(optionString, optionString, optionString + " description"));
+            }
+            var selectMenu = new DiscordSelectComponent("test_select", "select", optionList);
+            await context.RespondAsync(new DiscordMessageBuilder().AddComponents(selectMenu).WithContent("select menu test"));
         }
 
     }

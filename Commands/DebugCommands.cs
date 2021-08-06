@@ -54,5 +54,10 @@ namespace DudesBot.Commands
             await context.Channel.SendMessageAsync(await Services.PinArchiveService.PinnedMessageEmbedder(message));
         }
 
+        [Command("fakeexecution"), Hidden]
+        public async Task FakeCommandHandlerTester(CommandContext context, DiscordMember executor, [RemainingText] string commandString)
+        {
+            await ComponentHandlers.FakeCommandHandler(context.Client, commandString, context.Channel, executor);
+        }
     }
 }

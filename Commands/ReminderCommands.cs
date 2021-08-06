@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.EventHandling;
 using DSharpPlus.Interactivity.Extensions;
 using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +35,7 @@ namespace DudesBot.Commands
                 Channel_ID = context.Channel.Id.ToString(),
                 Time = dueTime,
             });
-            await context.RespondAsync($"Reminder set for {dueTime.ToLongTimeString()} on {dueTime.ToLongDateString()} UTC: {message}");
+            await context.RespondAsync($"Reminder set {Formatter.Timestamp(timeOffset, TimestampFormat.ShortDateTime)}: {message}");
         }
 
         [Command("reminders")]
@@ -46,7 +48,7 @@ namespace DudesBot.Commands
             {
                 if(reminder.User_ID == userIDString)
                 {
-                    reminderListString += $"<#{reminder.Channel_ID}> at {reminder.Time.ToLongTimeString()} on {reminder.Time.ToLongDateString()} UTC: {reminder.Message}\n";
+                    reminderListString += $"<#{reminder.Channel_ID}> {Formatter.Timestamp(reminder.Time, TimestampFormat.RelativeTime)} ({Formatter.Timestamp(reminder.Time, TimestampFormat.ShortDateTime)}): {reminder.Message}\n";
                 }
             }
             var interactivity = context.Client.GetInteractivity();
@@ -61,7 +63,7 @@ namespace DudesBot.Commands
             string reminderListString = "Your Reminders:\n";
             foreach(ReminderObject reminder in dbContext.ReminderObject)
             {
-                reminderListString += $"<#{reminder.Channel_ID}> at {reminder.Time.ToLongTimeString()} on {reminder.Time.ToLongDateString()} UTC: {reminder.Message}\n";
+                reminderListString += $"<#{reminder.Channel_ID}> {Formatter.Timestamp(reminder.Time, TimestampFormat.RelativeTime)} ({Formatter.Timestamp(reminder.Time, TimestampFormat.ShortDateTime)}): {reminder.Message}\n";
             }
             var interactivity = context.Client.GetInteractivity();
             var pages = interactivity.GeneratePagesInEmbed(reminderListString, DSharpPlus.Interactivity.Enums.SplitType.Line);

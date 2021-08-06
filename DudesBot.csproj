@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.1.0-nightly-00924" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0-nightly-00924" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0-nightly-00924" />
+    <PackageReference Include="DSharpPlus" Version="4.1.0-nightly-00947" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0-nightly-00947" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0-nightly-00947" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="8.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,6 +21,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="PokeApiNet" Version="3.0.2" />
+    <PackageReference Include="VideoLibrary" Version="3.1.2" />
   </ItemGroup>
 
 </Project>

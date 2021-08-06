@@ -28,28 +28,17 @@ namespace DudesBot.Services
         public async Task Start()
         {
             var DbContext = new BotDatabaseContext();
-            try
+            foreach (var reminder in DbContext.ReminderObjects)
             {
-                foreach (var reminder in DbContext.ReminderObjects)
+                try
                 {
-                    try
-                    {
-                        ReminderList.Add(new Timer(new TimerCallback((_) => { SendReminder(reminder); }), null, reminder.Time - DateTime.UtcNow, Timeout.InfiniteTimeSpan));
-                    }
-                    catch
-                    {
-                        SendReminder(reminder);
-                    }
+                    ReminderList.Add(new Timer(new TimerCallback((_) => { SendReminder(reminder); }), null, reminder.Time - DateTime.UtcNow, Timeout.InfiniteTimeSpan));
+                }
+                catch
+                {
+                    SendReminder(reminder);
                 }
             }
-            catch
-            {
-                DbContext.Database.ExecuteSqlRaw("DROP TABLE ReminderObjects");
-                DbContext.SaveChanges();
-                Console.WriteLine("cleared table");
-            }
-
-
         }
 
         public async Task AddReminder(ReminderObject reminder)

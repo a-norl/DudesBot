@@ -4,5 +4,6 @@
     "PinWatchedList" : [],
     "BotWatch" : false,
     "CommandPrefix" : ["r!"],
-    "DBPath" : "path to sqlite database"
+    "DBPath" : "path to sqlite database",
+    "QuietChannels" : [0]
 }

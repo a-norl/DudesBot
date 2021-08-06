@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CS1998
+#pragma warning disable CS4014
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +22,7 @@ using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PokeApiNet;
+using VideoLibrary;
 
 namespace DudesBot
 {
@@ -50,7 +52,9 @@ namespace DudesBot
                 .AddSingleton<Random>()
                 .AddSingleton<HttpClient>()
                 .AddSingleton<PokeApiClient>()
+                .AddSingleton<VideoClient>()
                 .AddSingleton<ReminderBackgroundService>()
+                .AddSingleton(new MessageSentWorker(discordClient))
                 .AddDbContextFactory<DudesDBContext>(options => options.UseSqlite($"Filename={botSettings.DBPath}"))
                 .BuildServiceProvider();
 
@@ -76,32 +80,34 @@ namespace DudesBot
                 Timeout = TimeSpan.FromSeconds(120),
             });
 
+            //Registering Commands
             commands.RegisterCommands<DebugCommands>(); //Turn off when in actual use
 
             commands.RegisterCommands<MiscCommands>();
             commands.RegisterCommands<PokemonCommands>();
-            commands.RegisterCommands<WarnCommands>();
             commands.RegisterCommands<ImageCommands>();
-            commands.RegisterCommands<ReminderCommands>();
             commands.RegisterCommands<CustomCommands>();
-            commands.RegisterCommands<UndeleteCommand>();
+            commands.RegisterCommands<ImageMusicCommand>();
+            if (botSettings.WarningCommand) { commands.RegisterCommands<WarnCommands>(); }
+            if (botSettings.ReminderCommand) { commands.RegisterCommands<ReminderCommands>(); }
+            if (botSettings.UndeleteCommand) { commands.RegisterCommands<UndeleteCommand>(); }
+
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
+            //Attaching Event Handlers
             discordClient.MessageUpdated += PinnedMessageHandler;
             discordClient.MessageCreated += MessageCreatedHandler;
             discordClient.MessageDeleted += MessageDeleteHandler;
+            discordClient.ComponentInteractionCreated += ComponentInteractionCreateHandler;
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
-            try
+
+            if (botSettings.ReminderCommand)
             {
                 services.GetService<ReminderBackgroundService>().AttachClient(discordClient);
                 await services.GetService<ReminderBackgroundService>().Start();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
             }
 
             await Task.Delay(-1);
@@ -109,13 +115,25 @@ namespace DudesBot
 
         static async Task MessageCreatedHandler(DiscordClient client, MessageCreateEventArgs eventArgs)
         {
-            //Put custom command handler here
+            client.GetCommandsNext().Services.GetService<MessageSentWorker>().Enqueue(eventArgs.Message); //Sends message to the MessageSendWorker
+            if (botSettings.QuietChannels.Contains(eventArgs.Channel.Id) && eventArgs.Author.IsBot)
+            {
+                Task.Run(() => { eventArgs.Message.DeleteAsync(); });
+            }
         }
 
         static async Task MessageDeleteHandler(DiscordClient client, MessageDeleteEventArgs eventArgs)
         {
+            if (eventArgs.Message is null) { return; }
+            if (eventArgs.Message.Author is null) { return; }
             if (eventArgs.Message.Author.IsBot) { return; }
             UndeleteCommand.LatestDelete = eventArgs.Message;
+        }
+
+        static async Task ComponentInteractionCreateHandler(DiscordClient client, ComponentInteractionCreateEventArgs eventArgs)
+        {
+            if (eventArgs.Id == "mousetrap_button") { ImageCommands.MouseTrapImage(client, eventArgs); }
+            if (eventArgs.Id == "test_select") { ComponentHandlers.TestSelectHandler(client, eventArgs); }
         }
 
         static async Task CommandErrorHandler(CommandsNextExtension _, CommandErrorEventArgs eventArgs)
@@ -144,7 +162,10 @@ namespace DudesBot
             {
                 Console.WriteLine(eventArgs.Exception);
                 if (eventArgs.Exception is CommandNotFoundException) { return; }
-                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder().WithTitle("Exception Thrown").WithDescription($"The command threw an exception with the message\n```{eventArgs.Exception.Message}\n```"));
+                await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder()
+                    .WithTitle("Exception Thrown")
+                    .WithDescription($"The command threw an exception with the message\n```{eventArgs.Exception.Message}\n```")
+                    .WithColor(new DiscordColor("36393F")));
             }
         }
 
@@ -156,10 +177,10 @@ namespace DudesBot
 
         static async Task PinnedMessageHandler(DiscordClient client, MessageUpdateEventArgs eventArgs)
         {
-            if (eventArgs.MessageBefore is null || eventArgs.Message is null) { return; }
-            if (eventArgs.MessageBefore.Pinned == false && eventArgs.Message.Pinned == true)
+            // if (eventArgs.MessageBefore is null || eventArgs.Message is null) { return; }
+            if (eventArgs.Message.Pinned == true)
             {
-                await PinArchiveService.Archiver(eventArgs, botSettings.PinChannel);
+                Task.Run(async () => { await PinArchiveService.Archiver(eventArgs, botSettings.PinChannel); });
             }
         }
     }

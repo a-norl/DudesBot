@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DudesBot.Commands
 {
-    public class CustomCommands :BaseCommandModule
+    public class CustomCommands : BaseCommandModule
     {
         public IDbContextFactory<DudesDBContext> ContextFactory { private get; set; }
 
-        [Command("addcommand"), Hidden]
+        [Command("addcommand"), Hidden, RequireOwner]
         public async Task AddCommandCommand(CommandContext context, string commandTrigger, string commandResponse)
         {
             var BotDBContext = ContextFactory.CreateDbContext();
@@ -20,7 +20,6 @@ namespace DudesBot.Commands
                 Response = commandResponse,
             };
             var AddCommandTask = BotDBContext.CustomCommandObjects.AddAsync(inputCommand);
-            await context.RespondAsync("adding command");
             await AddCommandTask;
             BotDBContext.SaveChanges();
             await context.RespondAsync($"added command {inputCommand.CommandPhrase} : {inputCommand.Response}");

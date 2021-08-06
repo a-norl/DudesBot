@@ -1,6 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -42,21 +44,24 @@ namespace DudesBot.Commands
             string userIDString = victim.Id.ToString();
             var result = BotDBContext.UserWarning.Where(warn => warn.UserId == userIDString);
 
-            string warningsBody = "```\n";
+            string warningsBody = "\n";
             foreach (UserWarning warning in result)
             {
                 warningsBody += $"Reason: {warning.WarnReason} \n";
             }
-            warningsBody += "```";
-            if (warningsBody == "```\n```")
+            if (warningsBody == "\n")
             {
                 await context.RespondAsync("User has no warnings");
                 return;
             }
             DiscordEmbedBuilder warningEmbed = new();
             warningEmbed.WithTitle($"Warnings for {victim.Username}:{victim.Discriminator}");
-            warningEmbed.WithDescription(warningsBody);
-            await context.RespondAsync(warningEmbed);
+            // warningEmbed.WithDescription(warningsBody);
+            // await context.RespondAsync(warningEmbed);
+
+            var interactivity = context.Client.GetInteractivity();
+            var pages = interactivity.GeneratePagesInEmbed(warningsBody, DSharpPlus.Interactivity.Enums.SplitType.Line, warningEmbed);
+            await context.Channel.SendPaginatedMessageAsync(context.Member, pages);
         }
     }
 }
