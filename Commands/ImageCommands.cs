@@ -400,7 +400,7 @@ namespace DudesBot.Commands
         public async Task TextTestCommand(CommandContext context, [RemainingText] string input)
         {
             await context.TriggerTypingAsync();
-            var imageCanvas = new MagickImage(MagickColors.Black, 500,500);
+            var imageCanvas = new MagickImage(MagickColors.Black, 500, 500);
 
             MagickReadSettings quoteTextSettings = new()
             {
@@ -487,7 +487,7 @@ namespace DudesBot.Commands
         {
             var interaction = eventArgs.Interaction;
             await interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
-            if(deleteOriginal){await interaction.DeleteOriginalResponseAsync();}
+            if (deleteOriginal) { await interaction.DeleteOriginalResponseAsync(); }
             await eventArgs.Channel.TriggerTypingAsync();
 
             var httpClient = client.GetCommandsNext().Services.GetService<HttpClient>();
@@ -573,8 +573,15 @@ namespace DudesBot.Commands
                 }
                 catch
                 {
-                    byte[] avatarByteArray = await getAvatarTask;
-                    return new MagickImage(avatarByteArray);
+                    try
+                    {
+                        byte[] avatarByteArray = await getAvatarTask;
+                        return new MagickImage(avatarByteArray);
+                    }
+                    catch
+                    {
+                        return new MagickImage(MagickColors.White, 400, 400);
+                    }
                 }
             }
         }
