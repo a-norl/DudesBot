@@ -17,6 +17,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.EventHandling;
 using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.SlashCommands;
 using DudesBot.Commands;
 using DudesBot.Services;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +67,11 @@ namespace DudesBot
                 Services = services
             });
 
+            SlashCommandsExtension slash = discordClient.UseSlashCommands(new SlashCommandsConfiguration()
+            {
+                Services = services
+            });
+
             InteractivityExtension interactivity = discordClient.UseInteractivity(new InteractivityConfiguration()
             {
                 PaginationButtons = new PaginationButtons()
@@ -95,6 +101,8 @@ namespace DudesBot
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
+            slash.RegisterCommands<ImageContextMenu>(846505700330962984);
+
             //Attaching Event Handlers
             discordClient.MessageUpdated += PinnedMessageHandler;
             discordClient.MessageCreated += MessageCreatedHandler;
@@ -109,7 +117,7 @@ namespace DudesBot
                 services.GetService<ReminderBackgroundService>().AttachClient(discordClient);
                 await services.GetService<ReminderBackgroundService>().Start();
             }
-
+            services.GetService<HttpClient>().DefaultRequestHeaders.Add("User-Agent", "Discord Bot By a_norl#7627");
             await Task.Delay(-1);
         }
 
