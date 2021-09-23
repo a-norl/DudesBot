@@ -17,15 +17,19 @@ namespace DudesBot.Commands
         [Command("jury")]
         public async Task Jury(CommandContext context)
         {
-            
+            await context.RespondAsync(":)");
         }
 
         public static async Task ActiveUserCounter(DiscordClient client, MessageCreateEventArgs eventArgs)
         {
-            // if (activeUserDict.Keys.Contains((DiscordMember)eventArgs.Message.Author))
-            // {
-            //     activeUserDict[(DiscordMember)eventArgs.Message.Author] = eventArgs.
-            // }
+            if (activeUserDict.ContainsKey((DiscordMember)eventArgs.Author))
+            {
+                activeUserDict[(DiscordMember)eventArgs.Author] = eventArgs.Message.Timestamp;
+            }
+            else
+            {
+                activeUserDict.Add((DiscordMember)eventArgs.Author, eventArgs.Message.Timestamp);
+            }
         }
     }
 }
