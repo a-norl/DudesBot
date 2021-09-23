@@ -601,7 +601,7 @@ namespace DudesBot.Commands
 
         }
 
-        private static async Task SendImage(MagickImage attachment, DiscordMessage commandMessage, string message, bool jpeg = false)
+        public static async Task SendImage(MagickImage attachment, DiscordMessage commandMessage, string message, bool jpeg = false)
         {
             string filePath;
             if (jpeg)
@@ -628,7 +628,7 @@ namespace DudesBot.Commands
             File.Delete(filePath);
         }
 
-        private static async Task SendImage(MagickImageCollection attachment, DiscordMessage commandMessage, string message) //Send gif
+        public static async Task SendImage(MagickImageCollection attachment, DiscordMessage commandMessage, string message) //Send gif
         {
             attachment[0].AnimationIterations = 0;
             string filePath = $"Output{Path.DirectorySeparatorChar}output_{DateTime.Now.ToFileTime()}.gif";
