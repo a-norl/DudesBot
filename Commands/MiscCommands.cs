@@ -7,7 +7,14 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus;
+using System.Net.Http;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 
 namespace DudesBot.Commands
 {
@@ -206,7 +213,7 @@ namespace DudesBot.Commands
             await message.ModifyAsync($"{UtilityMethods.GetName(member)} has been installed");
         }
 
-        [Command("nickname"), RequireOwner, Hidden]
+        [Command("nickname"), RequireOwner]
         public async Task ChangeBotNickname(CommandContext context, string newName)
         {
             await context.Guild.CurrentMember.ModifyAsync(self=>
@@ -216,7 +223,7 @@ namespace DudesBot.Commands
             await context.RespondAsync($"Nickname changed to {newName}");
         }
 
-        [Command("leave"), RequireOwner, Hidden]
+        [Command("leave"), RequireOwner]
         public async Task LeaveSearver(CommandContext context)
         {
             await context.Message.CreateReactionAsync(DiscordEmoji.FromName(context.Client, ":wave:"));
@@ -235,5 +242,99 @@ namespace DudesBot.Commands
             await context.RespondAsync(new DiscordMessageBuilder().AddComponents(selectMenu).WithContent("select menu test"));
         }
 
+        [Command("eval"),RequireOwner]
+        public async Task EvaluationCommand(CommandContext context, [RemainingText] string toEval)
+        {
+            var responseMsg = await context.RespondAsync(new DiscordEmbedBuilder()
+                                        .WithTitle("Evaluating...")
+                                        .WithColor(DiscordColor.Yellow));
+            
+            var globals = new EvaluationEnvironment(context);
+            var scriptOptions = ScriptOptions.Default
+                .WithImports("System", "System.Collections.Generic", "System.Diagnostics", "System.Linq", "System.Net.Http", "System.Net.Http.Headers", "System.Reflection", "System.Text", 
+                             "System.Threading.Tasks", "DSharpPlus", "DSharpPlus.CommandsNext", "DSharpPlus.Entities", "DSharpPlus.EventArgs", "DSharpPlus.Exceptions", "ImageMagick", "DudesBot.Commands", "DudesBot")
+                .WithReferences(AppDomain.CurrentDomain.GetAssemblies().Where(assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location)));
+
+            var compilationStopwatch = Stopwatch.StartNew();
+            var cScript = CSharpScript.Create(toEval, scriptOptions, typeof(EvaluationEnvironment));
+            var cScriptCompiled = cScript.Compile();
+            compilationStopwatch.Stop();
+
+            if(cScriptCompiled.Any(error => error.Severity == DiagnosticSeverity.Error))
+            {
+                string errorList = "```\n";
+                foreach(var error in cScriptCompiled)
+                {
+                    errorList += $"{error}\n";
+                }
+                errorList += "```";
+                var errorEmbed = new DiscordEmbedBuilder()
+                    .WithTitle("Compilation failed")
+                    .WithDescription($"Compilation failed after {compilationStopwatch.ElapsedMilliseconds} ms")
+                    .AddField("Errors", errorList)
+                    .WithColor(DiscordColor.Red);
+
+                await responseMsg.ModifyAsync(embed: errorEmbed.Build());
+                return;
+            }
+
+            Exception resultException = null;
+            ScriptState<object> scriptState = null;
+            var executionStopwatch = Stopwatch.StartNew();
+            try
+            {
+                scriptState = await cScript.RunAsync(globals);
+                resultException = scriptState.Exception;
+            }
+            catch(Exception e)
+            {
+                resultException = e;
+            }
+
+            if(resultException is not null)
+            {
+                var errorEmbed = new DiscordEmbedBuilder()
+                    .WithTitle("Execution Failed")
+                    .WithColor(DiscordColor.Red)
+                    .WithDescription($"Execution failed after {executionStopwatch.ElapsedMilliseconds} ms with `{resultException.GetType()}: {resultException.Message}`.");
+                await responseMsg.ModifyAsync(embed: errorEmbed.Build());
+                return;
+            }
+
+            var embed = new DiscordEmbedBuilder()
+                .WithTitle("Evaluation successful")
+                .WithColor(DiscordColor.Green);
+
+            embed.AddField("Result", (scriptState.ReturnValue != null && scriptState.ReturnValue.ToString() != "") ? scriptState.ReturnValue.ToString() : "No value return", false)
+                .AddField("Compilation Time", $"{compilationStopwatch.ElapsedMilliseconds} ms", true)
+                .AddField("Execution Time", $"{executionStopwatch.ElapsedMilliseconds} ms", true);
+
+            if(scriptState.ReturnValue is not null)
+            {
+                embed.AddField("Return Type", scriptState.ReturnValue.GetType().ToString(), true);
+            }
+
+            await responseMsg.ModifyAsync(embed: embed.Build());
+
+        }
+
+    }
+
+    public sealed class EvaluationEnvironment
+    {
+        public CommandContext Context { get; }
+
+        public DiscordMessage Message => this.Context.Message;
+        public DiscordChannel Channel => this.Context.Channel;
+        public DiscordGuild Guild => this.Context.Guild;
+        public DiscordUser User => this.Context.User;
+        public DiscordMember Member => this.Context.Member;
+        public DiscordClient Client => this.Context.Client;
+        public HttpClient Http => this.Context.Services.GetService<HttpClient>();
+
+        public EvaluationEnvironment(CommandContext ctx)
+        {
+            this.Context = ctx;
+        }
     }
 }
