@@ -47,7 +47,7 @@ namespace DudesBot.Commands
             string warningsBody = "\n";
             foreach (UserWarning warning in result)
             {
-                warningsBody += $"Reason: {warning.WarnReason} \n";
+                warningsBody += $"Reason: {warning.WarnReason} \n\n";
             }
             if (warningsBody == "\n")
             {
