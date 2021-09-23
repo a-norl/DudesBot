@@ -101,7 +101,8 @@ namespace DudesBot
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
-            slash.RegisterCommands<ImageContextMenu>(846505700330962984);
+            // slash.RegisterCommands<ImageContextMenu>(846505700330962984); //Bot Testing server
+            slash.RegisterCommands<ImageContextMenu>(824167452934012948); //Main server
 
             //Attaching Event Handlers
             discordClient.MessageUpdated += PinnedMessageHandler;
@@ -117,7 +118,7 @@ namespace DudesBot
                 services.GetService<ReminderBackgroundService>().AttachClient(discordClient);
                 await services.GetService<ReminderBackgroundService>().Start();
             }
-            services.GetService<HttpClient>().DefaultRequestHeaders.Add("User-Agent", "Discord Bot By a_norl#7627");
+            services.GetService<HttpClient>().DefaultRequestHeaders.Add("User-Agent", "Discord Bot By anorl#7827");
             await Task.Delay(-1);
         }
 

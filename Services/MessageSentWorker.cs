@@ -32,20 +32,20 @@ namespace DudesBot.Services
 
         private async void OnStart()
         {
-            while (true)
-            {
-                if (_workQueue.TryDequeue(out DiscordMessage message))
-                {
-                    if (message.Author.IsBot) { continue; }
-                    if (message.Content is null) { continue; }
-                    if (message.Content is "") { continue; }
-                    await MessageHandlers.CustomCommandHandler(message, _client.GetCommandsNext().Services);
-                    if (message.Content.Contains("armpit") || message.Content.Contains("arm pit"))
-                    {
-                        await message.DeleteAsync();
-                    }
-                }
-            }
+            // while (true)
+            // {
+            //     if (_workQueue.TryDequeue(out DiscordMessage message))
+            //     {
+            //         if (message.Author.IsBot) { continue; }
+            //         if (message.Content is null) { continue; }
+            //         if (message.Content is "") { continue; }
+            //         await MessageHandlers.CustomCommandHandler(message, _client.GetCommandsNext().Services);
+            //         if (message.Content.Contains("armpit") || message.Content.Contains("arm pit"))
+            //         {
+            //             await message.DeleteAsync();
+            //         }
+            //     }
+            // }
         }
     }
 
