@@ -84,6 +84,7 @@ namespace DudesBot
                 },
                 ButtonBehavior = ButtonPaginationBehavior.Disable,
                 Timeout = TimeSpan.FromSeconds(120),
+                AckPaginationButtons = true
             });
 
             //Registering Commands
