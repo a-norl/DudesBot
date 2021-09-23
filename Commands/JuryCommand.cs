@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using System.IO;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -73,10 +74,21 @@ namespace DudesBot.Commands
         }
 
         [Command("jail")]
-        public async Task JailUser(DiscordMember prisoner)
+        public async Task JailUser(CommandContext context, DiscordMember prisoner)
         {
-
-            // ImageCommands.SendImage();
+            MagickImageCollection animation = new();
+            MagickImage bars = new($"Resources{Path.DirectorySeparatorChar}jail_bars.png");
+            MagickImage jailImage = new MagickImage(MagickColors.Black, 600, 600);
+            int animLength = 60;
+            for (int i = 0; i < animLength; i++)
+            {
+                MagickImage newBackground = new MagickImage(jailImage);
+                newBackground.Composite(jailImage, 0, -600 + ((i/animLength) * 600), CompositeOperator.Over);
+                newBackground.AnimationDelay = 16;
+                newBackground.GifDisposeMethod = GifDisposeMethod.Background;
+                animation.Add(newBackground);
+            }
+            await ImageCommands.SendImage(animation, context.Message, "");
         }
     }
 }
