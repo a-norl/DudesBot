@@ -95,6 +95,7 @@ namespace DudesBot
             commands.RegisterCommands<ImageCommands>();
             commands.RegisterCommands<CustomCommands>();
             commands.RegisterCommands<ImageMusicCommand>();
+            commands.RegisterCommands<JuryCommand>();
             if (botSettings.WarningCommand) { commands.RegisterCommands<WarnCommands>(); }
             if (botSettings.ReminderCommand) { commands.RegisterCommands<ReminderCommands>(); }
             if (botSettings.UndeleteCommand) { commands.RegisterCommands<UndeleteCommand>(); }
@@ -102,12 +103,12 @@ namespace DudesBot
             commands.CommandErrored += CommandErrorHandler;
             commands.CommandExecuted += CommandExecutedHandler;
 
-            // slash.RegisterCommands<ImageContextMenu>(846505700330962984); //Bot Testing server
-            slash.RegisterCommands<ImageContextMenu>(824167452934012948); //Main server
+            slash.RegisterCommands<ImageContextMenu>(botSettings.GuildID); //Main server
 
             //Attaching Event Handlers
             discordClient.MessageUpdated += PinnedMessageHandler;
             discordClient.MessageCreated += MessageCreatedHandler;
+            discordClient.MessageCreated += JuryCommand.ActiveUserCounter;
             discordClient.MessageDeleted += MessageDeleteHandler;
             discordClient.ComponentInteractionCreated += ComponentInteractionCreateHandler;
 

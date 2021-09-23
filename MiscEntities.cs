@@ -12,5 +12,6 @@ namespace DudesBot
         public bool WarningCommand {get; init;}
         public bool ReminderCommand {get; init;}
         public bool UndeleteCommand {get; init;}
+        public ulong GuildID {get; init;}
     }
 }
