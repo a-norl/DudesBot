@@ -111,6 +111,7 @@ namespace DudesBot
             discordClient.MessageCreated += JuryCommand.ActiveUserCounter;
             discordClient.MessageDeleted += MessageDeleteHandler;
             discordClient.ComponentInteractionCreated += ComponentInteractionCreateHandler;
+            discordClient.ComponentInteractionCreated += JuryCommand.JuryButtonsHandler;
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
