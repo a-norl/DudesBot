@@ -64,7 +64,7 @@ namespace DudesBot
                 StringPrefixes = botSettings.CommandPrefix,
                 IgnoreExtraArguments = true,
                 EnableMentionPrefix = true,
-                Services = services
+                Services = services,
             });
 
             SlashCommandsExtension slash = discordClient.UseSlashCommands(new SlashCommandsConfiguration()
@@ -84,7 +84,9 @@ namespace DudesBot
                 },
                 ButtonBehavior = ButtonPaginationBehavior.Disable,
                 Timeout = TimeSpan.FromSeconds(120),
-                AckPaginationButtons = true
+                AckPaginationButtons = true,
+                ResponseBehavior = InteractionResponseBehavior.Ack,
+                
             });
 
             //Registering Commands
@@ -96,6 +98,7 @@ namespace DudesBot
             commands.RegisterCommands<CustomCommands>();
             commands.RegisterCommands<ImageMusicCommand>();
             commands.RegisterCommands<JuryCommand>();
+            commands.RegisterCommands<Hangman>();
             if (botSettings.WarningCommand) { commands.RegisterCommands<WarnCommands>(); }
             if (botSettings.ReminderCommand) { commands.RegisterCommands<ReminderCommands>(); }
             if (botSettings.UndeleteCommand) { commands.RegisterCommands<UndeleteCommand>(); }
@@ -112,6 +115,7 @@ namespace DudesBot
             discordClient.MessageDeleted += MessageDeleteHandler;
             discordClient.ComponentInteractionCreated += ComponentInteractionCreateHandler;
             discordClient.ComponentInteractionCreated += JuryCommand.JuryButtonsHandler;
+            
 
             await discordClient.ConnectAsync();
             Console.WriteLine("Connected to Discord");
@@ -159,7 +163,8 @@ namespace DudesBot
                     switch (check)
                     {
                         case CooldownAttribute:
-                            await eventArgs.Context.Message.RespondAsync("That command is on cooldown");
+                            double cooldownTime = Math.Round((check as CooldownAttribute).GetRemainingCooldown(eventArgs.Context).TotalSeconds, 2);
+                            await eventArgs.Context.Message.RespondAsync($"That command is on cooldown: {cooldownTime}s left");
                             break;
                         case RequireAttachmentAttribute:
                             await eventArgs.Context.Message.RespondAsync("Command requires an attachment");
@@ -177,7 +182,7 @@ namespace DudesBot
                 await eventArgs.Context.Message.RespondAsync(new DiscordEmbedBuilder()
                     .WithTitle("Exception Thrown")
                     .WithDescription($"The command threw an exception with the message\n```{eventArgs.Exception.Message}\n```")
-                    .WithColor(new DiscordColor("36393F")));
+                    .WithColor(DiscordColor.Red));
             }
         }
 

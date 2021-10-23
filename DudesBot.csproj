@@ -8,11 +8,15 @@
     </RestoreAdditionalProjectSources>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DSP-Version>4.2.0-nightly-01022</DSP-Version>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01003" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01003" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01003" />
-    <PackageReference Include="IDoEverything.DSharpPlus.SlashCommands" Version="2.0.1" />
+    <PackageReference Include="DSharpPlus" Version="$(DSP-Version)" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="$(DSP-Version)" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="$(DSP-Version)" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="$(DSP-Version)" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="8.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="3.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.11.0" />

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using ImageMagick;
@@ -359,9 +360,7 @@ namespace DudesBot.Commands
 
             string pattern = @"<:(.*?):\d+>";
             string replacement = "$1";
-            quote = Regex.Replace(quote, pattern, replacement); ;
-
-            quote = Regex.Replace(quote, "/(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?/gm", "");
+            quote = Regex.Replace(quote, pattern, replacement);
             quote = Regex.Replace(quote, "<(.*?)>", "");
 
             var imageCanvas = new MagickImage(MagickColors.Transparent, AZQuoteImage.Width, AZQuoteImage.Height);
@@ -637,7 +636,7 @@ namespace DudesBot.Commands
             FileStream outputFile = File.OpenRead(filePath);
 
             DiscordMessageBuilder replyMessage = new DiscordMessageBuilder()
-                .WithContent(message)
+                .WithContent($"{message}") //and with file size {Math.Round(outputFile.Length/1048576.0, 2)} mb
                 .WithFile(outputFile);
 
             await commandMessage.RespondAsync(replyMessage);

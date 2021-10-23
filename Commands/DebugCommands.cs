@@ -1,9 +1,11 @@
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DudesBot.Commands
@@ -30,7 +32,7 @@ namespace DudesBot.Commands
             await context.RespondAsync("response");
         }
 
-        [Command("getavatar"), Hidden]
+        [Command("getavatar")]
         public async Task GetAvatar(CommandContext context, DiscordMember queriedUser)
         {
             await context.RespondAsync(await UtilityMethods.GetProfilePictureURL(queriedUser, httpClient));
@@ -58,6 +60,22 @@ namespace DudesBot.Commands
         public async Task FakeCommandHandlerTester(CommandContext context, DiscordMember executor, [RemainingText] string commandString)
         {
             await ComponentHandlers.FakeCommandHandler(context.Client, commandString, context.Channel, executor);
+        }
+
+        [Command("buttonInteractivity"), Hidden]
+        public async Task ButtonInteractivityTest(CommandContext context)
+        {
+            var responseMessageBuilder = new DiscordMessageBuilder()
+                .WithContent("button")
+                .AddComponents(new DiscordButtonComponent(ButtonStyle.Primary, "inter_test", "press_me"));
+
+            var responseMessage = await context.RespondAsync(responseMessageBuilder);
+
+            var interactivityResponse = await responseMessage.WaitForButtonAsync(context.User);
+            if (!interactivityResponse.TimedOut)
+            {
+                await interactivityResponse.Result.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent("button"));
+            }
         }
     }
 }
